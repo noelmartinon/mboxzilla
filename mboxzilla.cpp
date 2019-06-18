@@ -28,9 +28,11 @@
 
 
 /****** Application description and notice ******/
+#define APP_VERSION "1.1.0"
+
 #define APP_INFO "\
 \n\
-mboxzilla version 1.1.0\n\
+mboxzilla version " APP_VERSION "\n\
 Copyright (C) 2017-2019 Noel Martinon. All rights reserved.\n\
 "
 
@@ -100,7 +102,6 @@ int main(int argc, char**argv)
     int total_upload_succeed=0;
     int total_upload_failed=0;
 
-    std::cout << APP_INFO << std::endl;
 
     try {
         cxxopts::Options options("mboxzilla", APP_DESCRIPTION, "[CONFIG_FILE]");
@@ -208,6 +209,8 @@ int main(int argc, char**argv)
                 "Verbose level for eml processing (N between 1 and 3, 3 is implicit). "
                 "1=ERROR, 2=WARNING, 3=INFO.",
                 cxxopts::value<int>()->implicit_value("3"), "N")
+            ("version",
+                "Display version number.")
             ("help",
                 "Display command line options.")
         ;
@@ -274,8 +277,15 @@ int main(int argc, char**argv)
             }
         }
 
+        if (options.count("version"))
+        {
+          std::cout << APP_VERSION << endl;
+          exit(0);
+        }
+
         if (options.count("help"))
         {
+          std::cout << APP_INFO << std::endl;
           std::cout << options.help({"", "Group"}) << std::endl;
           std::cout << APP_NOTICE << endl;
           exit(0);
@@ -286,7 +296,6 @@ int main(int argc, char**argv)
           throw cxxopts::OptionSpecException(u8"Option 'e' is not compatible with 's' or 'c' when sync is enabled.");
           exit(0);
         }
-
 
         if (options.count("v"))
         {
@@ -343,14 +352,17 @@ int main(int argc, char**argv)
         }
     }
     catch (const cxxopts::OptionException& e) {
+        std::cout << APP_INFO << std::endl;
         std::cout << "Error parsing options: " << e.what() << std::endl;
         std::cout << "Try --help for usage information." << std::endl << std::endl;
         exit(1);
     }
 
+    std::cout << APP_INFO << std::endl;
+
     el::Configurations defaultConf;
 
-    defaultConf.set(el::Level::Global, el::ConfigurationType::MaxLogFileSize, "1048576");//"1048576");
+    defaultConf.set(el::Level::Global, el::ConfigurationType::MaxLogFileSize, "1048576");
     defaultConf.set(el::Level::Global, el::ConfigurationType::Format, "%datetime %level %msg");
 
     el::Loggers::reconfigureLogger("default", defaultConf);
@@ -359,6 +371,7 @@ int main(int argc, char**argv)
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
 
     el::Helpers::installPreRollOutCallback(rolloutHandler);
+
 
     if (start_wait || start_random) {
         srand((unsigned)time(0));

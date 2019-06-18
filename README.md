@@ -108,6 +108,7 @@ mboxzilla is a free sofware designed to :
   -v, --verbose [=N(=3)]      Verbose level for eml processing (N between 1
                               and 3, 3 is implicit). 1=ERROR, 2=WARNING,
                               3=INFO.
+      --version               Display version number.
       --help                  Display command line options.
 ```
 
@@ -205,6 +206,6 @@ From linux do :
     ```
   - windows executable:
     ```
-    i686-w64-mingw32-g++ -static -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/win32/mboxzilla.exe -lcurl -lssl -lssh2 -lcrypto -lz -lws2_32 -lwldap32 -lwinmm -lgdi32 -DCURL_STATICLIB -DELPP_NO_DEFAULT_LOG_FILE && ./tools/upx.exe bin/win32/mboxzilla.exe
+    i686-w64-mingw32-g++ -static -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/win32/mboxzilla.exe -lcurl -lpthread -lssl -lssh2 -lcrypto -lz -lws2_32 -lwldap32 -lwinmm -lgdi32 -DCURL_STATICLIB -DELPP_NO_DEFAULT_LOG_FILE
     ```
 The **Mbox_parser** class can be freely used outside this project.
