@@ -30,8 +30,8 @@
 /****** Application description and notice ******/
 #define APP_INFO "\
 \n\
-mboxzilla version 1.0.0\n\
-Copyright (C) 2017 Noel Martinon. All rights reserved.\n\
+mboxzilla version 1.1.0\n\
+Copyright (C) 2017-2019 Noel Martinon. All rights reserved.\n\
 "
 
 #define APP_DESCRIPTION "\
@@ -56,7 +56,7 @@ Examples and more:\n\
 #include "mboxzilla.hpp"
 
 int main(int argc, char**argv)
-{    
+{
     Mbox_parser mbox;
     std::vector<std::string> vmboxfile;
     std::map<std::string, std::vector<std::string>> mapmbox; // <output subdir, mbox files>
@@ -81,7 +81,7 @@ int main(int argc, char**argv)
     bool bWindowsFormat = false;
     int age_min = 0;
     int age_max = 0;
-    string date_before, date_after; 
+    string date_before, date_after;
     int start_wait = 0, start_random = 0;
 
     int total_mbox=0;
@@ -99,7 +99,7 @@ int main(int argc, char**argv)
     int total_split_files=0;
     int total_upload_succeed=0;
     int total_upload_failed=0;
-    
+
     std::cout << APP_INFO << std::endl;
 
     try {
@@ -132,7 +132,7 @@ int main(int argc, char**argv)
                 cxxopts::value<bool>(bAuto))
             ("with-localfolders",
                 "Force processing the 'Thunderbird local folders' directory for all profiles selected. Only used with 'auto' option.",
-                cxxopts::value<bool>(bGetLocalFolders))                
+                cxxopts::value<bool>(bGetLocalFolders))
             ("force-user",
                 "Set the user name profile for Thunderbird search. Only used with 'auto' option.",
                 cxxopts::value<std::string>(username), "USER")
@@ -156,7 +156,7 @@ int main(int argc, char**argv)
                 "or 'from' fields is missing from the header. "
                 "The date filters do not affect these emails. "
                 "The names are formatted in '00000000000000_MD5.eml' (or eml.gz).",
-                cxxopts::value<bool>(bExtractInvalid))            
+                cxxopts::value<bool>(bExtractInvalid))
             ("x,with-duplicated",
                 "Duplicated emails are retained during processing.",
                 cxxopts::value<bool>(bExtractDuplicated))
@@ -215,14 +215,15 @@ int main(int argc, char**argv)
         // load settings from a configuration file
         CSimpleIniA ini;
         if (argc==2 && ini.LoadFile(argv[1])>=0) {
-            
+
             std::vector<string> args;
             CSimpleIniA::TNamesDepend keys;
             ini.GetAllKeys("", keys);
-            
+
             CSimpleIniA::TNamesDepend::const_iterator i;
             std::string s_argv;
-            for (i = keys.begin(); i != keys.end(); ++i) { 
+            args.push_back(argv[0]);
+            for (i = keys.begin(); i != keys.end(); ++i) {
                 // get the value of a key
                 const char * pszValue = ini.GetValue("", i->pItem, NULL);
                 if (std::string(pszValue).empty()) {
@@ -231,7 +232,7 @@ int main(int argc, char**argv)
                     msg += "'";
                     throw cxxopts::OptionSpecException(msg);
                 }
-                
+
                 if (std::string(pszValue)=="false") continue;
                 else if (std::string(pszValue)=="true")
                     s_argv = "--" + std::string(i->pItem);
@@ -239,17 +240,16 @@ int main(int argc, char**argv)
 
                 args.push_back(s_argv.c_str());
             }
-            
-            char **argv = new char* [args.size()+2];
-            argv[0]= (char*)"mboxzilla";
-            for (size_t j = 0;  j < args.size()+1;  ++j)     // copy args
-                argv [j+1] = (char*)args[j].c_str();
 
-            argv [args.size()+1] = NULL;
-            
+            // reset 'argc' and 'argv' (executable name + ini keys + NULL)
             argc = args.size();
+            char **argv = new char*[argc+1];
+            for (size_t j = 0;  j < argc;  ++j)     // copy args
+                argv[j] = (char*)args[j].c_str();
+            argv[argc] = NULL;
+
             options.parse(argc, (char**&)argv);
-            
+
             // Case bad option in the file
             if (argc>2) {
                 std::string msg = u8"Too many or unknown specified options ";
@@ -259,11 +259,11 @@ int main(int argc, char**argv)
                 }
                 throw cxxopts::OptionSpecException(msg);
             }
-            
+
         }
-        else { 
-            options.parse(argc, argv);        
-        
+        else {
+            options.parse(argc, argv);
+
             if (argc>1) {
                 std::string msg = u8"Too many or unknown specified options ";
                 for (int i=1; i<argc; i++) {
@@ -280,13 +280,13 @@ int main(int argc, char**argv)
           std::cout << APP_NOTICE << endl;
           exit(0);
         }
-        
+
         if (options.count("e") && (options.count("s")||options.count("c")) && bSynchonize)
         {
           throw cxxopts::OptionSpecException(u8"Option 'e' is not compatible with 's' or 'c' when sync is enabled.");
           exit(0);
         }
-        
+
 
         if (options.count("v"))
         {
@@ -312,7 +312,7 @@ int main(int argc, char**argv)
             (!options.count("u") && options.count("k"))) {
                 throw cxxopts::OptionSpecException(u8"Options 'u' and 'k' are linked and must both be configured");
         }
-        
+
         if (options.count("speed-limit") && !options.count("u") && !options.count("k")) {
                 throw cxxopts::OptionSpecException(u8"Option 'speed-limit' can not be used without options 'u' and 'k'");
         }
@@ -359,12 +359,12 @@ int main(int argc, char**argv)
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
 
     el::Helpers::installPreRollOutCallback(rolloutHandler);
-    
+
     if (start_wait || start_random) {
         srand((unsigned)time(0));
         unsigned int wait_time = start_wait + (rand() % (int)(start_random + 1)); // microseconds on linux, milliseconds on Windows
         cout << "Waiting " << wait_time << " seconds before start..." << endl;
-        wait_time = wait_time*1000;        
+        wait_time = wait_time*1000;
         Sleep(wait_time);
     }
 
@@ -393,7 +393,7 @@ int main(int argc, char**argv)
             LOG(INFO) << "Searching for Mozilla Thunderbird profiles";
 
             std::map<std::string, std::vector<std::string>> mapMailMbox = GetThunderbirdMbox(bGetLocalFolders, username, email_domain, source_exclude);
-            
+
             for(auto const& key : mapMailMbox) {
                 mapmbox[key.first] = key.second;
             }
@@ -410,7 +410,7 @@ int main(int argc, char**argv)
                 split(key.first , '|', v, false);
                 if (!outdirfinal.empty() && *outdirfinal.rbegin() != '/')
                     outdirfinal += "/";
-                outdirfinal += v[0];                
+                outdirfinal += v[0];
                 outputpathfinal = v[1];
             }
 
@@ -425,7 +425,7 @@ int main(int argc, char**argv)
                         outdir = outdirfinal+"/"+mboxfile.substr(pos+outputpathfinal.length(), mboxfile.length());
                     else {
                         infile = outputpathfinal+"/"+mboxfile;
-                        outdir = outdirfinal+"/"+mboxfile;                        
+                        outdir = outdirfinal+"/"+mboxfile;
                     }
                 }
 
@@ -433,7 +433,7 @@ int main(int argc, char**argv)
                 if (!key.first.empty()) {
                     str_replace(outdir, ".sbd/", "/");
                 }
-                
+
                 outdir = mbox.SetOutputDirectory(outdir); // ending with '/'
 
                 mbox.SetAgeMin(age_min);
@@ -447,14 +447,14 @@ int main(int argc, char**argv)
                 }
 
                 LOG(INFO) << "INPUT FILE is \""+infile+"\"";
-                LOG(INFO) << "OUTPUT DIRECTORY is "+((outdir.empty())?"undefined":"\""+outdir+"\"");                
+                LOG(INFO) << "OUTPUT DIRECTORY is "+((outdir.empty())?"undefined":"\""+outdir+"\"");
 
                 if (mbox.SetMboxFile(infile)){
 
                     bool remote_ok = false;
                     if (!host_url.empty()) {
                         try {
-                            remote_ok = Remote_IsAvailable();                        
+                            remote_ok = Remote_IsAvailable();
 
                             if (!remote_ok ) {
                                     LOG(ERROR) << "Remote connection to \""+host_url+"\" unavailable";
@@ -481,20 +481,20 @@ int main(int argc, char**argv)
                     bool bExceptionOccurred = false; // Used to disable files synchronization if partial parsing
                     try {
                         total_mbox++;
-                        mbox.Parse();                        
+                        mbox.Parse();
                     }
                     catch (const std::exception& ex) {
-                        LOG(ERROR) << "Parse exception : " << ex.what();    
-                        bExceptionOccurred = true;                    
+                        LOG(ERROR) << "Parse exception : " << ex.what();
+                        bExceptionOccurred = true;
                     }
-                    
+
                     // Clear directories
                     if (bActionExtract || bActionCompact || bActionCompact)
                         Remove_EmptyDir(outdirfinal);
-                    
+
                     // Add directory for sync if Thunderbird is processed and (extract or upload)
                     // and if has emails or parsing is in error to not delete previous exported emails
-                    if ((mbox.GetMailAvailable()>0 || bExceptionOccurred) && 
+                    if ((mbox.GetMailAvailable()>0 || bExceptionOccurred) &&
                         !key.first.empty() && (bActionExtract || !host_url.empty()))
                         voutputdir.push_back(outdir);
 
@@ -516,7 +516,7 @@ int main(int argc, char**argv)
                         if (bActionExtract) {
                             if (bEmlCompress) LOG(INFO) << "-> extracted to eml.gz = " << mbox.GetMailExtracted();
                             else LOG(INFO) << "-> extracted to eml = " << mbox.GetMailExtracted();
-                            if (bSynchonize) LOG(INFO) << "-> removed from destination = " << mbox.GetEmlDeleted();                            
+                            if (bSynchonize) LOG(INFO) << "-> removed from destination = " << mbox.GetEmlDeleted();
                             total_extracted += mbox.GetMailExtracted();
                             total_emldeleted += mbox.GetEmlDeleted();
                         }
@@ -539,7 +539,7 @@ int main(int argc, char**argv)
                             LOG(INFO) << "-> uploads failed = " << nbUploadError;
                             total_upload_succeed += nbUploadSuccess;
                             total_upload_failed += nbUploadError;
-                            
+
                             if (bSynchonize && !bExceptionOccurred) {
                                 LOG(INFO) << "Syncing files to \""+host_url+"\"";
                                 if (Remote_SendSyncList("sync_filelist", outdir, mbox.GetEmlList())) LOG(INFO) << "Synchronization done";
@@ -550,38 +550,38 @@ int main(int argc, char**argv)
                 }
             } // END key.second loop
         } // END mapmbox loop
-        
+
         // Synchronize directory tree (remove old dir - apply only on Thunderbird)
-        if (bSynchonize && voutputdir.size()) {                        
+        if (bSynchonize && voutputdir.size()) {
             string outdirbase = voutputdir[0]; // Retrieve base directory that is outputdir/username
             std::vector<char> data(outdirbase.begin(), outdirbase.end());
             size_t pos = offset(data, "/", outputdir.length()+1);
-            outdirbase = outdirbase.substr(0, pos);            
-            
+            outdirbase = outdirbase.substr(0, pos);
+
             if (!host_url.empty()){
                 LOG(INFO) << "Syncing directories to \""+host_url+"\"";
-                
+
                 if (Remote_SendSyncList("sync_dirlist", outdirbase, voutputdir)) LOG(INFO) << "Synchronization done";
                 else LOG(ERROR) << "Synchronization not completed";
             }
-            
-            if (bActionExtract) {                
+
+            if (bActionExtract) {
                 std::vector<string> vListDirectories;
                 vListDirectories.push_back(outdirbase);
                 ListAllSubDirectories(vListDirectories, outdirbase);
 
                 for (auto& dir : vListDirectories)
                     dir = dir+"/";
-                
+
                 vector<string> vListDiff;
                 sort(vListDirectories.begin(), vListDirectories.end());
                 sort(voutputdir.begin(), voutputdir.end()); // voutputdir ending with '/'
-                
+
                 // Search elements of vListDirectories which are not found in the sorted voutputdir
                 set_difference(vListDirectories.begin(),vListDirectories.end(),voutputdir.begin(),voutputdir.end(),back_inserter(vListDiff));
-                
+
                 std::vector<std::string> v_dirtoremove;
-                             
+
                 for (auto dir:vListDiff) {
                     bool isParentDir = false;
                     for (auto& str : voutputdir) {
@@ -591,9 +591,9 @@ int main(int argc, char**argv)
                         }
                     }
                     if (!isParentDir)
-                        v_dirtoremove.push_back(dir);                        
+                        v_dirtoremove.push_back(dir);
                 }
-                
+
                 std::reverse(v_dirtoremove.begin(),v_dirtoremove.end());
                 for (auto dir:v_dirtoremove) {
                     std::vector<string> vListFiles;
@@ -608,7 +608,7 @@ int main(int argc, char**argv)
                         if (!ret) LOG(INFO) <<  "Directory \""+dir+"\" was deleted";
                         else LOG(ERROR) << "WARNING", "Can not delete directory \""+dir+"\"";
                     }
-                }                
+                }
             }
         }
 
@@ -647,7 +647,7 @@ int main(int argc, char**argv)
         LOG(ERROR) << "Global exception : " << ex.what();
         return 1;
     }
-    
+
     std::cout << std::endl;
     return 0;
 }
