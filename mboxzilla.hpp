@@ -1,7 +1,7 @@
 /*
     BSD 2-Clause License
 
-    Copyright (c) 2017, Noël Martinon
+    Copyright (c) 2017-2019, Noël Martinon
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -72,12 +72,12 @@ long long speedlimit = 0;
 //---------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  sha256()
  *  Generate a 256 SHA hash from string
  */
 std::string sha256(string inputstr) {
-    
+
     unsigned char hash[SHA256_DIGEST_LENGTH];
     std::stringstream stream;
     SHA256_CTX sha256;
@@ -92,24 +92,24 @@ std::string sha256(string inputstr) {
     return stream.str();
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  AES_NormalizeKey()
  *  Make a key of exactly 32 bytes using a hash SHA-256
  */
 std::string AES_NormalizeKey(std::string inputstr) {
-    
+
     std::string retVal;
     retVal = sha256(inputstr);
     retVal.resize(32);
     return retVal;
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  url_encode()
  *  Encode a string to be used in a query part of a URL
  */
 string url_encode(const std::string &value) {
-    
+
     ostringstream escaped;
     escaped.fill('0');
     escaped << hex;
@@ -132,12 +132,12 @@ string url_encode(const std::string &value) {
     return escaped.str();
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  AES_Encrypt()
  *  Encrypt vector of char arrays to a vector of char arrays using AES_256_CBC encryption mode
  */
 bool AES_Encrypt(string key, std::vector<unsigned char>& iv, std::vector<char>& ptext, std::string& ctext) {
-    
+
     try {
         if (key.length()!=32)
             throw std::runtime_error("AES-256-CBC key must be 256 bits");
@@ -176,12 +176,12 @@ bool AES_Encrypt(string key, std::vector<unsigned char>& iv, std::vector<char>& 
     }
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  AES_Encrypt()
  *  Encrypt vector of char arrays to a vector of char arrays using AES_256_CBC encryption mode
  */
 bool AES_Encrypt(string key, std::vector<unsigned char>& iv, std::vector<char>& ptext, std::vector<char>& ctext) {
-    
+
     try {
         if (key.length()!=32)
             throw std::runtime_error("AES-256-CBC key must be 256 bits");
@@ -220,12 +220,12 @@ bool AES_Encrypt(string key, std::vector<unsigned char>& iv, std::vector<char>& 
     }
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  AES_Decrypt()
  *  Decrypt string to a STL string using AES_256_CBC encryption mode
  */
 void AES_Decrypt(string key, std::vector<unsigned char>& iv, const std::string& ctext, std::string& rtext) {
-    
+
     EVP_CIPHER_CTX *ctx;
     if(!(ctx = EVP_CIPHER_CTX_new())) throw std::runtime_error("EVP_CIPHER_CTX_new failed");
     int rc = EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, (const unsigned char*)key.c_str(), reinterpret_cast<unsigned char*> (&iv[0]));
@@ -249,12 +249,12 @@ void AES_Decrypt(string key, std::vector<unsigned char>& iv, const std::string& 
     rtext.resize(out_len1 + out_len2);
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  AES_Decrypt()
  *  Decrypt string to a vector of char arrays using AES_256_CBC encryption mode
  */
 void AES_Decrypt(string key, std::vector<unsigned char>& iv, std::string& ctext, std::vector<char>& rtext) {
-    
+
     EVP_CIPHER_CTX *ctx;
     if(!(ctx = EVP_CIPHER_CTX_new())) throw std::runtime_error("EVP_CIPHER_CTX_new failed");
     int rc = EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, (const unsigned char*)key.c_str(), reinterpret_cast<unsigned char*> (&iv[0]));
@@ -278,12 +278,12 @@ void AES_Decrypt(string key, std::vector<unsigned char>& iv, std::string& ctext,
     rtext.resize(out_len1 + out_len2);
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  base64Encode()
  *  Encodes the given data with base64
  */
 std::string base64Encode(const std::string &data, size_t len=-1) {
-    
+
     BIO *bmem, *b64, *bcontainer;
     BUF_MEM *bptr;
     std::string encoded_data;
@@ -308,12 +308,12 @@ std::string base64Encode(const std::string &data, size_t len=-1) {
     return encoded_data;
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  base64Decode()
  *  Decodes data encoded with MIME base64
  */
 std::string base64Decode(const std::string &data) {
-    
+
     BIO *bmem, *b64, *bcontainer;
 
     char *buf = new char[data.size()];
@@ -341,12 +341,12 @@ std::string base64Decode(const std::string &data) {
     return decoded_data;
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  Parse_remote_log()
  *  Parse the response of remote server to logging process
  */
 void Parse_remote_log(string logmsg) {
-    
+
     if (logmsg.empty()) return;
     if (logmsg.find("INFO#") == 0){ LOG(INFO) << logmsg.substr(5); }
     else if (logmsg.find("WARNING#") == 0){ LOG(WARNING) << logmsg.substr(8); }
@@ -357,22 +357,22 @@ void Parse_remote_log(string logmsg) {
     //else LOG(INFO) << logmsg;
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  WriteCallback_toBuffer()
  *  CURL callback for writing received data to buffer defined in CURLOPT_WRITEDATA option
  */
 size_t WriteCallback_toBuffer(void *buffer, size_t size, size_t nmemb, void *userp) {
-    
+
     ((std::string*)userp)->append((char*)buffer, size * nmemb);
     return size * nmemb;
 }
 //---------------------------------------------------------------------------------------------
-/** 
+/**
  *  WriteCallback()
  *  CURL callback for logging
  */
 size_t WriteCallback(void *buffer, size_t size, size_t nmemb, void *userp) {
-    
+
     std::vector<std::string> vSplit;
     string sBuf((char*)buffer);
     sBuf.resize(size*nmemb);
@@ -402,7 +402,7 @@ size_t WriteCallback(void *buffer, size_t size, size_t nmemb, void *userp) {
  *  Verify that remote host accept requests to upload eml files
  */
 bool Remote_IsAvailable() {
-    
+
     CURL *curl;
     CURLcode res;
     bool ret = false;
@@ -496,7 +496,7 @@ bool Remote_IsAvailable() {
  *  Get files stored in remote directory. Use to find out if a file must be uploaded.
  */
 bool Remote_GetList(json &j, const std::string outputdir) {
-    
+
     CURL *curl;
     CURLcode res;
     bool ret = false;
@@ -590,7 +590,7 @@ bool Remote_GetList(json &j, const std::string outputdir) {
  *  Send eml or eml.gz to remote host
  */
 bool Remote_SendEml(string fname, std::vector<char> eml) {
-    
+
     CURL *curl;
     CURLcode res;
     double speed_upload, total_time;
@@ -862,7 +862,7 @@ void callbackEML(string dirname, string filename, std::vector<char> eml) {
 ** Callback function for logging
 */
 void callbackLOG(string logtype, string logmsg) {
-    
+
     if (logtype=="INFO") {LOG(INFO) << logmsg.data();}
     else if (logtype=="ERROR") {LOG(ERROR) << logmsg.data();}
     else if (logtype=="WARNING") {LOG(WARNING) << logmsg.data();}
@@ -876,7 +876,7 @@ void callbackLOG(string logtype, string logmsg) {
 ** Callback function used to rotate log files
 */
 void rolloutHandler(const char* filename, std::size_t size) {
-    
+
     std::stringstream ssSrc, ssDst;
     string fileName = filename;
 
@@ -890,12 +890,12 @@ void rolloutHandler(const char* filename, std::size_t size) {
             if (FileExists(ssDst.str())) std::remove( ssDst.str().c_str() );
             rename(ssSrc.str().c_str(), ssDst.str().c_str());
         }
-        
+
         ssSrc.str(std::string()); ssSrc.clear();
         ssDst.str(std::string()); ssDst.clear();
 
     }
-    
+
     if (maxlogfiles>1) {
         ssDst << extractName << ".log.1";
         rename(filename, ssDst.str().c_str());
@@ -909,7 +909,7 @@ void rolloutHandler(const char* filename, std::size_t size) {
  *  Returns true if source file is mbox type
  */
 bool IsMboxFile(std::string filename) {
-    
+
     char buffer[6] = "0";
     std::ifstream mboxfile( filename, std::ios::binary | std::ios::ate);
     if (mboxfile.fail() || mboxfile.tellg()<5) return false;
@@ -922,25 +922,25 @@ bool IsMboxFile(std::string filename) {
 //---------------------------------------------------------------------------------------------
 /**
  *  GetRegexVector()
- *  Search a regex into string list and extract substring 
+ *  Search a regex into string list and extract substring
  *  Returns index of the line where the element has been found
  *  else return -1 if not found
  */
-int GetRegexVector (std::vector<std::string>& vString, const std::string& sRegex, std::vector<std::string>& vResult, int iVectorIndex=0) {    
-    
+int GetRegexVector (std::vector<std::string>& vString, const std::string& sRegex, std::vector<std::string>& vResult, int iVectorIndex=0) {
+
     std::regex rgx(sRegex);
     std::smatch match;
     int index=-1;
-    
+
     vResult.clear();
-    
-    for(auto it:vString) {    
+
+    for(auto it:vString) {
         if(++index >= iVectorIndex && std::regex_search(it, match, rgx)  && match.size() > 1) {
             for (auto iter: match) {
                 vResult.push_back(iter);
             }
             return index;
-        }        
+        }
     }
     return -1;
 }
@@ -955,17 +955,17 @@ void ListThunderbirdMbox(std::map<std::string, std::vector<std::string>>& map, s
 
     vListDirectories.push_back(directory);
     ListAllSubDirectories(vListDirectories, directory);
-    
+
     for (auto itDir:vListDirectories) {
         std::vector<string> vList;
         ListDirectoryContents(vList, itDir, true, false);
-                    
+
         for (auto itFile:vList) {
-            string mbx = itDir+"/"+itFile;                    
+            string mbx = itDir+"/"+itFile;
             if (IsMboxFile(mbx)) {
                 // Extract mbox name only (without account dir) and test if excluded
                 mbx = mbx.data()+directory.length()+1;
-                
+
                 bool bIgnore = false;
                 if (vMboxExcluded.size()) {
                     for (auto it:vMboxExcluded) {
@@ -974,20 +974,20 @@ void ListThunderbirdMbox(std::map<std::string, std::vector<std::string>>& map, s
                             LOG(WARNING) << "-> Ignore Mbox file  \""+itDir+"/"+itFile+"\"";
                             bIgnore = true;
                             break;
-                        }                        
+                        }
                     }
                 }
-                
+
                 if (!bIgnore)
                     map[destination_path+"|"+directory].push_back(itDir+"/"+itFile);
             }
         }
     }
-    
-    sort(map[destination_path+"|"+directory].begin(),map[destination_path+"|"+directory].end(),NoCaseLess);            
+
+    sort(map[destination_path+"|"+directory].begin(),map[destination_path+"|"+directory].end(),NoCaseLess);
 
 }
-//---------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------
 /**
  *  GetThunderbirdMbox()
  *  Automaticaly retrieve all mbox files of Mozilla Thunderbird email program
@@ -997,28 +997,28 @@ void ListThunderbirdMbox(std::map<std::string, std::vector<std::string>>& map, s
  *  Returns the list of mbox files
  */
 std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getlocalfolders=false, std::string username="", std::string email_domain="", std::string source_exclude="") {
-    
+
     std::string userpath, tbpath, user="";
-    
+
     // Search profile path
     #ifdef __linux__
         userpath = path_dusting(getenv("HOME"));
     #elif _WIN32
         userpath = path_dusting(getenv("USERPROFILE"));
     #endif
-    
+
     if (!DirectoryExists(userpath))
-        return std::map<std::string, std::vector<std::string>>();    
-    
+        return std::map<std::string, std::vector<std::string>>();
+
     // Get the user name and the global users directory path
     size_t pos = userpath.find_last_of("/");
     if (pos != string::npos) {
         if (!username.empty())
-            userpath = userpath.substr(0, pos+1) + username;        
+            userpath = userpath.substr(0, pos+1) + username;
         user = userpath.substr(pos+1);
     }
     else return std::map<std::string, std::vector<std::string>>();
-    
+
     // Search thunderbird path
     #ifdef __linux__
         tbpath = userpath+"/.thunderbird";
@@ -1030,27 +1030,27 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
             tbpath = userpath+"/Application Data/Thunderbird";
         }
     #endif
-    
+
     if (!DirectoryExists(tbpath)) return std::map<std::string, std::vector<std::string>>();
-    
+
     // Initialize mbox excluded regex list
     vector<string> vMboxExcluded;
     if (!source_exclude.empty()) {
         split(source_exclude , ',', vMboxExcluded, false);
-        // If no comma found then excluded list is the full string            
+        // If no comma found then excluded list is the full string
         if (vMboxExcluded.empty())
             vMboxExcluded.push_back(source_exclude);
-            
+
     }
-    
+
     // Search thunderbird profiles
-    CSimpleIniA ini;    
-    std::vector<string> vProfiles;    
+    CSimpleIniA ini;
+    std::vector<string> vProfiles;
     string profile = tbpath+"/profiles.ini";
-    
+
     ini.SetUnicode();
     ini.Reset();
-    
+
     SI_Error rc = ini.LoadFile(profile.c_str());
     if (rc < 0) {
         LOG(ERROR) << "-> No Mozilla Thunderbird profiles.ini file found";
@@ -1059,9 +1059,9 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
     else {
         CSimpleIniA::TNamesDepend sections, keys;
         ini.GetAllSections(sections);
-        
+
         CSimpleIniA::TNamesDepend::const_iterator i;
-        for (i = sections.begin(); i != sections.end(); ++i) { 
+        for (i = sections.begin(); i != sections.end(); ++i) {
             std::regex rgx("^Profile.*", regex_constants::icase);
             if (std::regex_match(i->pItem, rgx)) {
                 const char * pszValue = ini.GetValue(i->pItem, "path", NULL);
@@ -1071,70 +1071,70 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
             }
         }
     }
-    
+
     if (vProfiles.size()==0) {
         LOG(ERROR) << "-> No Mozilla Thunderbird profiles found";
         return std::map<std::string, std::vector<std::string>>();
     }
-    
+
     // Scan all thunderbird profiles
     std::vector<std::string> lines;
     std::vector<std::string> match;
     std::string line;
     string accountDir;
-    string server;    
+    string server;
     string email;
-    std::map<std::string, std::vector<std::string>> mapFiles;    
-    
-    for (auto tbprofile:vProfiles) {        
-                
+    std::map<std::string, std::vector<std::string>> mapFiles;
+
+    for (auto tbprofile:vProfiles) {
+
         LOG(INFO) << "-> Found profile \""+tbprofile+"\"";
-        bool done_localfolders = false; // store current profile local folders always listed        
+        bool done_localfolders = false; // store current profile local folders always listed
         std::ifstream file(tbpath +"/"+tbprofile+"/prefs.js");
-        
+
         while ( std::getline(file, line) ) {
             if ( !line.empty() )
                 lines.push_back(line);
         }
-        
+
         // Search all available identities (get 'id#')
         std::map<std::string, std::string> mAccount;
         int idx=-1;
         string regex_filter_base = "\"mail\\.identity\\.(.*)\\.useremail\",.* \"(.*)@(.*)"+email_domain+"\"";
-        while ((idx=GetRegexVector(lines, regex_filter_base, match, ++idx))>-1) {                
-            
+        while ((idx=GetRegexVector(lines, regex_filter_base, match, ++idx))>-1) {
+
             if (match.size() <= 3) continue;
             email = match[2]+"@"+match[3]+email_domain;
-            
+
             // Get 'account#'
-            // /!\ Sometimes there is many identities and it could be eg "id1,id2"            
+            // /!\ Sometimes there is many identities and it could be eg "id1,id2"
             string regex_filter = "\"mail\\.account\\.(.*)\\.identities\",.* \"(.*,)?"+match[1]+"(,.*)?\"";
             GetRegexVector(lines, regex_filter, match);
             if (match.size() <= 1) continue;
-            
+
             // If account always done then continue
             string account = match[1];
             auto iter = mAccount.find( match[1] );
             if( iter != mAccount.cend() ) {
                 LOG(WARNING) << "-> Ignore \""+email+"\" account because merged with \""+iter->second+"\"";
                 continue;
-            }                        
+            }
 
             // Get 'server#'
             regex_filter = "\"mail\\.account\\."+match[1]+"\\.server\",.* \"(.*)\"";
             GetRegexVector(lines, regex_filter, match);
             if (match.size() <= 1) continue;
             server = match[1];
-            
+
             // Check if server is not an imap type
             regex_filter= "\"mail\\.server\\."+match[1]+"\\.type\",.* \"(.*)\"";
-            GetRegexVector(lines, regex_filter, match);            
+            GetRegexVector(lines, regex_filter, match);
             if (match.size() <= 1) continue;
             if (match[1] == "imap") {
-                LOG(WARNING) << "-> Account \""+email+"\" is ignored because it has an imap type";    
+                LOG(WARNING) << "-> Account \""+email+"\" is ignored because it has an imap type";
                 continue;
             }
-            
+
             // Check value 'deferred_to_account' for current account's 'server#'
             // and if exists then get 'server#' for the corresponding account
             // It often happens when "local folders" is used
@@ -1147,34 +1147,34 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
                 if (match.size() <= 1) continue;
                 server = match[1];
             }
-        
+
             // Get emails directory (in "directory-rel" because "directory" is not always the true path)
             regex_filter = "\"mail\\.server\\."+server+"\\.directory-rel\",.* \"(.*)\"";
             GetRegexVector(lines, regex_filter, match);
             if (match.size() <= 1) continue;
-            
+
             accountDir = path_dusting(match[1]);
             str_replace(accountDir, "[ProfD]", tbpath +"/"+tbprofile+"/");
-            
+
             LOG(INFO) << "-> Found account \""+email+"\"";
-            mAccount[account]=email;                    
-            
-            // If an account directory is local folders then ignore            
+            mAccount[account]=email;
+
+            // If an account directory is local folders then ignore
             if (accountDir.compare(tbpath +"/"+tbprofile+"/Mail/Local Folders") == 0){
                 done_localfolders = true;
                 if (b_getlocalfolders)
                     LOG(INFO) << "-> \"Local folders\" is merged with \""+email+"\" account";
             }
-            
+
             // List current account content
             string tbprofile_only = tbprofile;
             size_t pos = tbprofile.find_last_of("/");
             if (pos != string::npos)
                 tbprofile_only = tbprofile.substr(pos+1);
             ListThunderbirdMbox(mapFiles, user+"/"+tbprofile_only+"/"+email, accountDir, vMboxExcluded);
-                                
+
         }
-        
+
         // List profile local folders content
         if (b_getlocalfolders && !done_localfolders){
             string tbprofile_only = tbprofile;
@@ -1184,10 +1184,10 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
             ListThunderbirdMbox(mapFiles, user+"/"+tbprofile_only+"/"+"Local Folders", tbpath +"/"+tbprofile+"/Mail/Local Folders", vMboxExcluded);
             done_localfolders = true;
             LOG(INFO) << "-> \"Local folders\" is processed separately";
-        }        
+        }
 
     } // End auto vProfiles
-    
+
     return mapFiles;
 }
 //---------------------------------------------------------------------------------------------
@@ -1199,12 +1199,12 @@ void Remove_EmptyDir(std::string directory) {
 
     std::vector<string> vListDirectory;
     ListAllSubDirectories(vListDirectory, directory);
-    
+
     // Sort and reverse list because we need to verify child directories before parents
     // in order to recursively delete empty dir
     sort(vListDirectory.begin(), vListDirectory.end());
     std::reverse(vListDirectory.begin(), vListDirectory.end());
-    
+
     for (auto itDir:vListDirectory) {
         std::vector<string> vList;
         ListDirectoryContents(vList, itDir, true, true);

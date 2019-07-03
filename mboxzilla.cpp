@@ -1,7 +1,7 @@
 /*
     BSD 2-Clause License
 
-    Copyright (c) 2017, Noël Martinon
+    Copyright (c) 2017-2019, Noël Martinon
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 
 /****** Application description and notice ******/
-#define APP_VERSION "1.1.0"
+#define APP_VERSION "1.2.0"
 
 #define APP_INFO "\
 \n\

@@ -1,7 +1,7 @@
 /*
     BSD 2-Clause License
 
-    Copyright (c) 2017, Noël Martinon
+    Copyright (c) 2017-2019, Noël Martinon
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,14 @@
  *  NoCaseLess()
  *  To use with sort() to have a insensitive sorted list
  *    EXAMPLE :
- *      sort(v.begin(),v.end(),NoCaseLess);            
+ *      sort(v.begin(),v.end(),NoCaseLess);
  *      copy(v.begin(),v.end(),ostream_iterator<string>(cout,"\n")); // to view result
  */
 struct case_insensitive_less : public std::binary_function< char,char,bool >
 {
     bool operator () (char x, char y) const
     {
-        return toupper( static_cast< unsigned char >(x)) < 
+        return toupper( static_cast< unsigned char >(x)) <
                toupper( static_cast< unsigned char >(y));
     }
 };
@@ -595,7 +595,7 @@ std::string bytes_convert(double bytes) {
  *  Returns true if string is a number
  */
 bool is_number(const std::string& s) {
-    
+
     return !s.empty() && std::find_if(s.begin(),
         s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }

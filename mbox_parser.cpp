@@ -1,7 +1,7 @@
 /*
     BSD 2-Clause License
 
-    Copyright (c) 2017, Noël Martinon
+    Copyright (c) 2017-2019, Noël Martinon
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
     OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
- 
+
 #include "mbox_parser.hpp"
 #include "common.hpp"
 
@@ -226,7 +226,7 @@ int Mbox_parser::Parse() {
         }
         return -1;
     }
-    
+
     this->Init();
 
     // Create output directory if necessary
@@ -272,7 +272,7 @@ int Mbox_parser::Parse() {
     }
 
     if (*cbFunc_log) cbFunc_log ("INFO", "Start parsing file \""+mboxfullname+"\"");
-    
+
     while(mboxfile.gcount()) {
         mboxindex += mboxfile.gcount();
         this->i_progression=100*((float)mboxindex/(float)mboxlength);
@@ -338,7 +338,7 @@ bool Mbox_parser::FindMailSeparator(bool bUseAsctime) {
     // If vmails is empty then this the end of the mbox file
     if (!vmails.size()) return false;
 
-    mailsize = offset(vmails, "\nFrom ", 1); // +1 to start search from vmails+1 that always is the "r" of "From"    
+    mailsize = offset(vmails, "\nFrom ", 1); // +1 to start search from vmails+1 that always is the "r" of "From"
 
     while (mailsize!=std::string::npos || (mboxindex == mboxlength && mailsize==std::string::npos)) {
         // If end of mbox file
@@ -358,7 +358,7 @@ bool Mbox_parser::FindMailSeparator(bool bUseAsctime) {
             size_t pos_s = offset(vmails, " ", mailsize+6)+1;// search next space following "From "
             if (pos_s==(size_t)-1) return false;
 
-            // Extract string in order to search asctime date            
+            // Extract string in order to search asctime date
             const std::string s (vmails.begin()+pos_s,vmails.begin()+pos);
             std::vector<std::string> v;
             split(s , ' ', v, false);
@@ -371,23 +371,23 @@ bool Mbox_parser::FindMailSeparator(bool bUseAsctime) {
             string date = v[0]+" "+v[1]+" "+v[2]+" "+v[3]+" "+v[4];
             if (!is_asctime(date, false))
                 return false;
-                
+
             return true;
         }
         // Verify if next line is a header field
         else {
             size_t pos_endfrom = offset(vmails, "\n", mailsize+1);// search '\n' at the end of the line "From "
             if (pos_endfrom==(size_t)-1) return false;
-            
+
             size_t pos = offset(vmails, "\n", pos_endfrom+1);
             if (pos==(size_t)-1) return false;
             if (vmails[pos-1] == '\r') pos--;
-                        
+
             const std::string s (vmails.begin()+pos_endfrom+1,vmails.begin()+pos);
             std::regex rgx("^.+:");
             if (std::regex_match(s, rgx))
                 return false;
-            
+
             return true;
         }
         mailsize = offset(vmails, "\nFrom ", mailsize+1);
@@ -482,14 +482,14 @@ void Mbox_parser::ProcessMail() {
         nbmailexcluded++;
         return;
     }
-    
+
     // Deleted emails are renamed
     if (IsDeletedMail())
         emlfilename = "del_"+EmlFilename();
 
-       // Verifying duplicate email
-       int nbdup = count_needle(emlList, EmlFilename());
-       if (nbdup > 0)
+    // Verifying duplicate email
+    int nbdup = count_needle(emlList, EmlFilename());
+    if (nbdup > 0)
     {
         nbmailduplicated++;
         if (!bExtractDuplicated) {
@@ -499,7 +499,7 @@ void Mbox_parser::ProcessMail() {
         }
         emlfilename = "dup"+std::to_string(nbdup)+"_"+EmlFilename();
     }
-    
+
 
     nbmailok++;
     emlList.push_back(EmlFilename());
@@ -539,7 +539,7 @@ void Mbox_parser::ProcessMail() {
             cbFunc_eml_process(outputdirectory, EmlFilename(), vmailcrlf);
         }
     }
-    
+
     vmail.clear();
     vheader.clear();
     vmailcrlf.clear();
@@ -686,7 +686,7 @@ bool Mbox_parser::SaveToSplit(){
 string Mbox_parser::GetHeaderField(string headerField, bool insensitiveSearch, int index) {
 
     int idx_headerField = 0;
-    
+
     headerField = "\n"+headerField; // Prepend with "\n" to be sure it is not a text contained in field's value
     headerField += ":";
 
@@ -694,7 +694,7 @@ string Mbox_parser::GetHeaderField(string headerField, bool insensitiveSearch, i
     string headerValue;
 
     size_t line=0;
-    while (idx_headerField++ <= index) {        
+    while (idx_headerField++ <= index) {
         if (insensitiveSearch) line = ci_offset(vheader, headerField, line);
         else line = offset(vheader, headerField, line);
         if (line==(size_t)-1) return "";
@@ -822,7 +822,7 @@ bool Mbox_parser::IsExcludedMail() {
  *  GetMailAvailable()
  *  According to the options 'ExtractDeleted' and 'ExtractInvalid' available emails
  *  may contain deletes or invalids in addition to valid emails
- *  Return the number of available emails 
+ *  Return the number of available emails
  */
 int Mbox_parser::GetMailAvailable(){
 
@@ -1035,23 +1035,23 @@ bool Mbox_parser::GetMailDate(bool is_forcesearch) {
     if (bmaildatestored) return true;
     vector<string> v;
     int dayindex = 1; // Current decimal day index in vector string date;
-    
+
     split(headerfield_date , ' ', v, false); // eg: "Fri, 16 Nov 2012 13:16:09 -0400"
-    if (std::isdigit(v[0][0])) dayindex = 0; // eg: "16 Nov 2012 13:16:09 -0400"
-        
+    if (!v.empty() && std::isdigit(v[0][0])) dayindex = 0; // eg: "16 Nov 2012 13:16:09 -0400"
+
     // If date string is malformed then try with other string formats or to find the closest date
-    if (v.size() < (size_t)(4+dayindex) || 
+    if (v.size() < (size_t)(4+dayindex) ||
         !is_number(v[dayindex]) ||
         get_month_num(v[dayindex+1])==-1 ||
         !is_number(v[dayindex+2]) ||
         (v[dayindex+3].find(":") == std::string::npos) ) {
-            
+
         // Exit if trying to search date (not first function call)
-        if (is_forcesearch) return false;                
-        
+        if (is_forcesearch) return false;
+
         // Else searching for the date :
         headerfield_date.clear();
-        
+
         // Trying conversion by removing "-" eg: "16-Nov-2012 13:16:09 -0400"
         if (v.size()>0 && !v[0].empty()) std::replace( v[0].begin(), v[0].end(), '-', ' ');
         if (v.size()>1 && !v[1].empty()) std::replace( v[1].begin(), v[1].end(), '-', ' ');
@@ -1059,7 +1059,7 @@ bool Mbox_parser::GetMailDate(bool is_forcesearch) {
         headerfield_date = trim(headerfield_date);
         GetMailDate(true);
         if (bmaildatestored) return true;
-        
+
         // Trying with an extraction of the last header 'Received'
         int index=-1;
         do {
@@ -1074,17 +1074,17 @@ bool Mbox_parser::GetMailDate(bool is_forcesearch) {
             GetMailDate(true);
         }
         if (bmaildatestored) return true;
-        
+
         // Date is not valid then email is invalid
         return false;
     }
- 
+
 
     string monthname = v[dayindex+1]; // Month to int
     transform(monthname.begin(), monthname.end(), monthname.begin(),(int (*)(int))tolower);
     vector<string> vTime;
     split(v[dayindex+3], ':', vTime, false);
-    
+
     // Sometimes the time is only hh:mm so we correct it
     // eg: "Wed, 29 Jan 2014 14:30 +0100"
     while ( vTime.size() < 3 )
@@ -1094,13 +1094,17 @@ bool Mbox_parser::GetMailDate(bool is_forcesearch) {
     if (v.size()>=(size_t)(dayindex+5)) smailTZ = v[dayindex+4]; // timezone
     else smailTZ = "0000";
 
+    int year = atoi(v[dayindex+2].c_str());
+    if (year < 90 ) year += 2000;
+    else if (year < 99 ) year += 1900;
+
     int imailTZ = atoi(smailTZ.c_str());
     int hourmailTZ = imailTZ/100;
     int minutemailTZ = imailTZ%100;
 
     tm_maildate.tm_mday = atoi(v[dayindex].c_str());
     tm_maildate.tm_mon = get_month_num(monthname)-1;
-    tm_maildate.tm_year = atoi(v[dayindex+2].c_str()) - 1900;
+    tm_maildate.tm_year = year - 1900;
     tm_maildate.tm_hour = atoi(vTime[0].c_str())-hourmailTZ+hourlocalTZ;
     tm_maildate.tm_min = atoi(vTime[1].c_str())-minutemailTZ+minutelocalTZ;
     tm_maildate.tm_sec = atoi(vTime[2].c_str());

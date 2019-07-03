@@ -1,7 +1,7 @@
 /*
     BSD 2-Clause License
 
-    Copyright (c) 2017, Noël Martinon
+    Copyright (c) 2017-2019, Noël Martinon
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@ class Mbox_parser {
         bool bGenerateMboxSplit;
         bool bDisableMboxSplit; // Avoid to append split file when there has been a previous 'open or write' error
         bool bCompressEml;
-        bool bExtractInvalid;        
+        bool bExtractInvalid;
         bool bExtractDeleted;
         bool bExtractDuplicated;
         int splitindex;
