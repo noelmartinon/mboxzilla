@@ -118,16 +118,16 @@ mboxzilla is a free sofware designed to :
 
       mboxzilla -f inbox
       mboxzilla -a
-  
+
 - Extract all messages to local folder as eml files
-  
+
       mboxzilla -f inbox -o backup_dir -e
-  
+
 - Extract all messages younger than 30 days to local folder
-  
+
       mboxzilla -f inbox -o backup_dir -e --age-max=30
-  
-- Upload all messages found in Thunderbird profiles with :
+
+- Upload all messages found in Thunderbird profiles to URL (see 'server/index.php') with :
 
      - EML compression to gzip = active
      - Emails age max = 365 days
@@ -148,8 +148,8 @@ mboxzilla is a free sofware designed to :
         --synchronize --speed-limit=32768 -v 2 --log-file=mboxzilla.log
   ```
   OR
-  
-  ```mboxzilla settings.conf``` where configuration file contains : 
+
+  ```mboxzilla settings.conf``` where configuration file contains :
      ```
         # mboxzilla configuration example
         auto=true
@@ -165,12 +165,29 @@ mboxzilla is a free sofware designed to :
         verbose=2
         log-file=mboxzilla.log
      ```
-     
+
+- Upload all messages found in Thunderbird profiles to a folder :
+
+  ```mboxzilla settings.conf``` where configuration file contains :
+     ```
+        # mboxzilla configuration example
+        auto=true
+        compress=true
+        email-domain=domain.tld
+        source-exclude=trash.*,drafts.*,junk.*,templates.*
+        with-localfolders=true
+        output=C:\Users\username\Documents\emails
+        extract=true
+        synchronize=true
+        verbose=2
+        log-file=mboxzilla.log
+     ```
+
   Web server requires:
     - a file to manage requests in https://server_url/mails/ (see index.php in "server" directory)
     - a subdirectory in "mails/" to store the exported files (see $target_dir value in index.php)
     - to set the key to decrypt eml files (see $key value)
-  
+
 ## Informations and advices
   - The mbox source files are read-only access and so are never modified.
   - If 'auto' option is set then output directory for Thunderbird is
@@ -181,7 +198,7 @@ mboxzilla is a free sofware designed to :
   - Thunderbird IMAP type accounts are ignored.
   - If an error occurred while parsing a mbox then its processing is aborted
     and goes to next one. In this case there is no files synchronization.
-  
+
   - This software uses the following external libraries :
     * CXXOPTS - Copyright (c) 2014-2016 Jarryd Beck\
         -> source: https://github.com/jarro2783/cxxopts
