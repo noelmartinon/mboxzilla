@@ -1001,7 +1001,7 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
     std::string userpath, tbpath, user="";
 
     // Search profile path
-    #ifdef __linux__
+    #if defined(__linux__) || defined(__APPLE__)
         userpath = path_dusting(getenv("HOME"));
     #elif _WIN32
         userpath = path_dusting(getenv("USERPROFILE"));
@@ -1020,7 +1020,7 @@ std::map<std::string, std::vector<std::string>> GetThunderbirdMbox(bool b_getloc
     else return std::map<std::string, std::vector<std::string>>();
 
     // Search thunderbird path
-    #ifdef __linux__
+    #if defined(__linux__) || defined(__APPLE__)
         tbpath = userpath+"/.thunderbird";
     #elif _WIN32
         // Path for Windows >= 7

@@ -49,7 +49,7 @@
     inline void usleep(int usec) {
         return Sleep(usec/1000);
     }
-#elif __linux__
+#elif defined(__linux__) || defined(__APPLE__)
     #include <unistd.h>
     inline int Sleep(int sleepMs) {
         return usleep(sleepMs * 1000);
