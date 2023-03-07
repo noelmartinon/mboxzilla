@@ -221,6 +221,11 @@ From linux do :
     ```
     g++ -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/linux/mboxzilla -lcrypto -lcurl -lz -DELPP_NO_DEFAULT_LOG_FILE
     ```
+  - macos binary:
+    ```
+    export OPENSSL_PREFIX="$(brew --prefix openssl)"
+    g++ -Os -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/macos/mboxzilla -lcrypto -lcurl -lz -DELPP_NO_DEFAULT_LOG_FILE -I${OPENSSL_PREFIX}/include -L${OPENSSL_PREFIX}/lib
+    ```
   - windows executable:
     ```
     i686-w64-mingw32-g++ -static -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/win32/mboxzilla.exe -lcurl -lpthread -lssl -lssh2 -lcrypto -lz -lws2_32 -lwldap32 -lwinmm -lgdi32 -DCURL_STATICLIB -DELPP_NO_DEFAULT_LOG_FILE
