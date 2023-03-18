@@ -547,12 +547,13 @@ void Mbox_parser::ProcessMail() {
 //---------------------------------------------------------------------------------------------
 /**
  *  StoreEML()
- *  Save eml to vector vmailcrlf (windows format)
+ *  Save email to vector vmailcrlf in the brut format as it is in the inbox file unless the
+ *  "windows-format" option is specified. In this case, the end of line character is forced to "\r\n"
  */
 void Mbox_parser::StoreEML(){
 
     if (vmailcrlf.size()) return;
-    int firstline = offset(vmail, "\n")+1; //
+    int firstline = offset(vmail, "\n")+1;
 
     if (newline == "\n" && bEmlToWindows) {
         string crlf = "\r\n";
@@ -561,6 +562,7 @@ void Mbox_parser::StoreEML(){
         while (pos != (size_t)-1) {
             ShowProgressBar();
             vmailcrlf.insert( std::end(vmailcrlf), std::begin(vmail)+prevpos, std::begin(vmail)+pos );
+            if (vmailcrlf.back() == '\r') vmailcrlf.pop_back(); // Sometimes the extracted email contains a mix of linux and windows line breaks
             vmailcrlf.insert( std::end(vmailcrlf), std::begin(crlf), std::end(crlf) );
 
             prevpos = pos+1;
