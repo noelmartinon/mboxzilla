@@ -80,10 +80,15 @@ std::string sha256(string inputstr) {
 
     unsigned char hash[SHA256_DIGEST_LENGTH];
     std::stringstream stream;
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, inputstr.c_str(), inputstr.length());
-    SHA256_Final(hash, &sha256);
+    #if OPENSSL_VERSION_NUMBER >= 0x030000000
+        EVP_Digest((const unsigned char *)(inputstr.c_str()), inputstr.length(), hash, NULL, EVP_sha256(), NULL);
+    #else
+        SHA256_CTX sha256;
+        SHA256_Init(&sha256);
+        SHA256_Update(&sha256, inputstr.c_str(), inputstr.length());
+        SHA256_Final(hash, &sha256);
+    #endif
+
     int i = 0;
     for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
     {
