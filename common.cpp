@@ -148,7 +148,11 @@ std::string PrintMD5(std::string str) {
     unsigned char result[MD5_DIGEST_LENGTH];
     const char *cstr = str.c_str();
 
-    MD5((const unsigned char*)cstr, str.length(), result);
+    #if OPENSSL_VERSION_NUMBER >= 0x030000000
+        EVP_Digest((const unsigned char *)cstr, str.length(), result, NULL, EVP_md5(), NULL);
+    #else
+        MD5((const unsigned char*)cstr, str.length(), result);
+    #endif
 
     for (size_t i = 0; i < MD5_DIGEST_LENGTH; ++i)
     {

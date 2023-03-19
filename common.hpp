@@ -42,6 +42,9 @@
 #include <errno.h>
 #include <cmath>         // floor
 #include <dirent.h>     // dirent, opendir
+#if OPENSSL_VERSION_NUMBER >= 0x030000000
+    #include <openssl/evp.h>
+#endif
 
 /// Cross platform sleep functions
 #ifdef _WIN32
