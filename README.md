@@ -213,7 +213,7 @@ mboxzilla is a free sofware designed to :
 
 The build requirements are:
 - C++ compiler that supports C++11 regular expressions. For example GCC >= 4.9 or clang with libc++.
-- C++ Libraries : zlib, ssh2, ssl, curl
+- C++ Libraries : zlib, ssh2, ssl, curl (see installation script in 'docs' folder)
 
 From linux do :
 
@@ -226,8 +226,12 @@ From linux do :
     export OPENSSL_PREFIX="$(brew --prefix openssl)"
     g++ -Os -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/macos/mboxzilla -lcrypto -lcurl -lz -DELPP_NO_DEFAULT_LOG_FILE -I${OPENSSL_PREFIX}/include -L${OPENSSL_PREFIX}/lib
     ```
-  - windows executable:
+  - windows 32bits executable:
     ```
-    i686-w64-mingw32-g++ -static -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/win32/mboxzilla.exe -lcurl -lpthread -lssl -lssh2 -lcrypto -lz -lws2_32 -lwldap32 -lwinmm -lgdi32 -DCURL_STATICLIB -DELPP_NO_DEFAULT_LOG_FILE
+    i686-w64-mingw32-g++ -static -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/win32/mboxzilla.exe -lcurl -lpthread -lssl -lssh2 -lcrypto -lcrypt32 -lz -lws2_32 -lwldap32 -lwinmm -lgdi32 -DCURL_STATICLIB -DELPP_NO_DEFAULT_LOG_FILE
+    ```
+  - windows 64bits executable:
+    ```
+    x86_64-w64-mingw32-g++ -static -Os -s -std=c++11 mboxzilla.cpp mbox_parser.cpp common.cpp easylogging++.cc -o bin/win64/mboxzilla.exe -lcurl -lpthread -lssl -lssh2 -lcrypto -lcrypt32 -lbcrypt -lz -lws2_32 -lwldap32 -lwinmm -lgdi32 -DCURL_STATICLIB -DELPP_NO_DEFAULT_LOG_FILE
     ```
 The **Mbox_parser** class can be freely used outside this project.
