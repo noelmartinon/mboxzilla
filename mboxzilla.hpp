@@ -413,8 +413,6 @@ bool Remote_IsAvailable() {
     bool ret = false;
     std::string readBuffer;
 
-    struct curl_httppost *formpost = NULL;
-    struct curl_httppost *lastptr = NULL;
     struct curl_slist *headerlist = NULL;
     static const char buf[] =  "Expect:";
 
@@ -434,37 +432,26 @@ bool Remote_IsAvailable() {
     string ciphertext_token_b64 = base64Encode(ciphertext_token, ciphertext_token.size());
 
     curl_global_init(CURL_GLOBAL_ALL);
-
-    /* Now specify the POST data */
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "token",
-             CURLFORM_COPYCONTENTS, ciphertext_token_b64.c_str(),
-             CURLFORM_END);
-
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "token_iv",
-             CURLFORM_COPYCONTENTS, aes_iv_token_str.c_str(),
-             CURLFORM_END);
-
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "check",
-             CURLFORM_COPYCONTENTS, "HELLO",
-             CURLFORM_END);
-
     curl = curl_easy_init();
 
     // initialize custom header list (stating that Expect: 100-continue is not wanted
     headerlist = curl_slist_append(headerlist, buf);
     if (curl) {
+        curl_mime *multipart = curl_mime_init(curl);
+        curl_mimepart *part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token");
+        curl_mime_data(part, ciphertext_token_b64.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token_iv");
+        curl_mime_data(part, aes_iv_token_str.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "check");
+        curl_mime_data(part, "HELLO", CURL_ZERO_TERMINATED);
 
         curl_easy_setopt(curl, CURLOPT_URL, host_url.c_str());
-
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, multipart);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback_toBuffer); // Disable standard output
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
@@ -486,7 +473,7 @@ bool Remote_IsAvailable() {
         }
 
         curl_easy_cleanup(curl);
-        curl_formfree(formpost);
+        curl_mime_free(multipart);
         curl_slist_free_all(headerlist);
     }
 
@@ -508,8 +495,6 @@ bool Remote_GetList(json &j, const std::string outputdir) {
     j.clear();
     std::string readBuffer;
 
-    struct curl_httppost *formpost = NULL;
-    struct curl_httppost *lastptr = NULL;
     struct curl_slist *headerlist = NULL;
     static const char buf[] =  "Expect:";
 
@@ -528,37 +513,26 @@ bool Remote_GetList(json &j, const std::string outputdir) {
     string ciphertext_token_b64 = base64Encode(ciphertext_token, ciphertext_token.size());
 
     curl_global_init(CURL_GLOBAL_ALL);
-
-    /* Now specify the POST data */
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "token",
-        CURLFORM_COPYCONTENTS, ciphertext_token_b64.c_str(),
-        CURLFORM_END);
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "token_iv",
-        CURLFORM_COPYCONTENTS, aes_iv_token_str.c_str(),
-        CURLFORM_END);
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "get_filelist",
-        CURLFORM_COPYCONTENTS, outputdir.c_str(),
-        CURLFORM_END);
-
     curl = curl_easy_init();
 
     // initialize custom header list (stating that Expect: 100-continue is not wanted
     headerlist = curl_slist_append(headerlist, buf);
     if (curl) {
+        curl_mime *multipart = curl_mime_init(curl);
+        curl_mimepart *part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token");
+        curl_mime_data(part, ciphertext_token_b64.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token_iv");
+        curl_mime_data(part, aes_iv_token_str.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "get_filelist");
+        curl_mime_data(part, outputdir.c_str(), CURL_ZERO_TERMINATED);
 
         curl_easy_setopt(curl, CURLOPT_URL, host_url.c_str());
-
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, multipart);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback_toBuffer); // Disable standard output
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
@@ -580,7 +554,7 @@ bool Remote_GetList(json &j, const std::string outputdir) {
         }
 
         curl_easy_cleanup(curl);
-        curl_formfree(formpost);
+        curl_mime_free(multipart);
         curl_slist_free_all(headerlist);
     }
 
@@ -601,8 +575,6 @@ bool Remote_SendEml(string fname, std::vector<char> eml) {
     double speed_upload, total_time;
     bool ret = false;
 
-    struct curl_httppost *formpost = NULL;
-    struct curl_httppost *lastptr = NULL;
     struct curl_slist *headerlist = NULL;
     static const char buf[] =  "Expect:";
 
@@ -629,59 +601,36 @@ bool Remote_SendEml(string fname, std::vector<char> eml) {
     string ciphertext_token_b64 = base64Encode(ciphertext_token, ciphertext_token.size());
 
     curl_global_init(CURL_GLOBAL_ALL);
-
-    /* Now specify the POST data */
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "token",
-             CURLFORM_COPYCONTENTS, ciphertext_token_b64.c_str(),
-             CURLFORM_END);
-
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "token_iv",
-             CURLFORM_COPYCONTENTS, aes_iv_token_str.c_str(),
-             CURLFORM_END);
-
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "iv",
-             CURLFORM_COPYCONTENTS, aes_iv_str.c_str(),
-             CURLFORM_END);
-
-    // set up the header
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "cache-control:",
-        CURLFORM_COPYCONTENTS, "no-cache",
-        CURLFORM_END);
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "content-type:",
-        CURLFORM_COPYCONTENTS, "multipart/form-data",
-        CURLFORM_END);
-
-    fname = base64Encode(fname); // b64 encoded because COPYNAME strip slash
-
-    curl_formadd(&formpost, &lastptr,
-        CURLFORM_COPYNAME, "fileToUpload",  // <--- the (in this case) wanted file-Tag!
-        CURLFORM_BUFFER, fname.c_str(),
-        CURLFORM_BUFFERPTR, ciphertext.data(),
-        CURLFORM_BUFFERLENGTH, ciphertext.size(),
-        CURLFORM_END);
-
     curl = curl_easy_init();
 
     // initialize custom header list (stating that Expect: 100-continue is not wanted
     headerlist = curl_slist_append(headerlist, buf);
     if (curl) {
+        curl_mime *multipart = curl_mime_init(curl);
+        curl_mimepart *part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token");
+        curl_mime_data(part, ciphertext_token_b64.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token_iv");
+        curl_mime_data(part, aes_iv_token_str.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "iv");
+        curl_mime_data(part, aes_iv_str.c_str(), CURL_ZERO_TERMINATED);
+        fname = base64Encode(fname); // b64 encoded because COPYNAME strip slash
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "fileToUpload");
+        curl_mime_data(part, ciphertext.data(), (curl_off_t) ciphertext.size());
+        curl_mime_filename(part, fname.c_str());
+
+        struct curl_slist *headers=NULL;
+        headers = curl_slist_append(headers, "cache-control: no-cache");
+        headers = curl_slist_append(headers, "content-type: multipart/form-data");
+        curl_mime_headers(part, headers, false);
 
         curl_easy_setopt(curl, CURLOPT_URL, host_url.c_str());
-
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, multipart);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback); // Disable standard output
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, speedlimit);
@@ -690,7 +639,7 @@ bool Remote_SendEml(string fname, std::vector<char> eml) {
         /* Check for errors */
         if (res == CURLE_OK) {
             /* now extract transfer info */
-            curl_easy_getinfo(curl, CURLINFO_SPEED_UPLOAD, &speed_upload);
+            curl_easy_getinfo(curl, CURLINFO_SPEED_UPLOAD_T, &speed_upload);
             curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
             VLOG(3) << "Speed was " << bytes_convert(speed_upload) << "/s during " << floor(total_time*100)/100 << " seconds";
 
@@ -709,7 +658,7 @@ bool Remote_SendEml(string fname, std::vector<char> eml) {
         }
 
         curl_easy_cleanup(curl);
-        curl_formfree(formpost);
+        curl_mime_free(multipart);
         curl_slist_free_all(headerlist);
     }
 
@@ -733,8 +682,6 @@ bool Remote_SendSyncList(const std::string ListName, std::string SyncDir, std::v
     CURLcode res;
     bool ret = false;
 
-    struct curl_httppost *formpost = NULL;
-    struct curl_httppost *lastptr = NULL;
     struct curl_slist *headerlist = NULL;
     static const char buf[] =  "Expect:";
 
@@ -753,63 +700,34 @@ bool Remote_SendSyncList(const std::string ListName, std::string SyncDir, std::v
     string ciphertext_token_b64 = base64Encode(ciphertext_token, ciphertext_token.size());
 
     curl_global_init(CURL_GLOBAL_ALL);
-
-    /* Now specify the POST data */
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "token",
-             CURLFORM_COPYCONTENTS, ciphertext_token_b64.c_str(),
-             CURLFORM_END);
-
-    curl_formadd(&formpost,
-             &lastptr,
-             CURLFORM_COPYNAME, "token_iv",
-             CURLFORM_COPYCONTENTS, aes_iv_token_str.c_str(),
-             CURLFORM_END);
-
-    // set up the header
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "cache-control:",
-        CURLFORM_COPYCONTENTS, "no-cache",
-        CURLFORM_END);
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "content-type:",
-        CURLFORM_COPYCONTENTS, "application/json",
-        CURLFORM_END);
-
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "content-type:",
-        CURLFORM_COPYCONTENTS, "multipart/form-data",
-        CURLFORM_END);
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, ListName.c_str(),
-        CURLFORM_COPYCONTENTS, sSync.c_str(),
-        CURLFORM_END);
-
-    curl_formadd(&formpost,
-        &lastptr,
-        CURLFORM_COPYNAME, "sync_directory",
-        CURLFORM_COPYCONTENTS, SyncDir.c_str(),
-        CURLFORM_END);
-
     curl = curl_easy_init();
 
     // initialize custom header list (stating that Expect: 100-continue is not wanted
     headerlist = curl_slist_append(headerlist, buf);
     if (curl) {
+        curl_mime *multipart = curl_mime_init(curl);
+        curl_mimepart *part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token");
+        curl_mime_data(part, ciphertext_token_b64.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "token_iv");
+        curl_mime_data(part, aes_iv_token_str.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, ListName.c_str());
+        curl_mime_data(part, sSync.c_str(), CURL_ZERO_TERMINATED);
+        part = curl_mime_addpart(multipart);
+        curl_mime_name(part, "sync_directory");
+        curl_mime_data(part, SyncDir.c_str(), CURL_ZERO_TERMINATED);
+
+        struct curl_slist *headers=NULL;
+        headers = curl_slist_append(headers, "cache-control: no-cache");
+        headers = curl_slist_append(headers, "content-type: multipart/form-data");
+        curl_mime_headers(part, headers, false);
 
         curl_easy_setopt(curl, CURLOPT_URL, host_url.c_str());
-
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, multipart);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback); // Disable standard output
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
 
@@ -829,7 +747,8 @@ bool Remote_SendSyncList(const std::string ListName, std::string SyncDir, std::v
         }
 
         curl_easy_cleanup(curl);
-        curl_formfree(formpost);
+        curl_mime_free(multipart);
+        curl_slist_free_all(headers);
         curl_slist_free_all(headerlist);
     }
 
