@@ -2,7 +2,7 @@
 /*
     BSD 2-Clause License
 
-    Copyright (c) 2017, Noël Martinon
+    Copyright (c) 2017-2023, Noël Martinon
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -42,27 +42,24 @@ $maxdelay = 60; // Max seconds allow the request be accepted ( see validateDate(
 
 // ** FUNCTIONS AND PROCESSING **
 function aes256_cbc_decrypt($key, $data, $iv) {
-  //if(32 !== strlen($key)) $key = hash('SHA256', $key, true);
-  //if(16 !== strlen($iv)) $iv = hash('MD5', $iv, true);
-  $data = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $data, MCRYPT_MODE_CBC, $iv);
-  $padding = ord($data[strlen($data) - 1]);
-  return substr($data, 0, -$padding);
+  $data = openssl_decrypt($data, "aes-256-cbc", $key, OPENSSL_RAW_DATA, $iv);
+  return $data;
 }
 
 /**
- * Secure connection with client date so that if request is intercepted by hack then 
+ * Secure connection with client date so that if request is intercepted by hack then
  * it can not be valid over $maxdelay seconds
  * This feature need time sync with client as ntp !
  * Return true if request was received in the last $maxdelay seconds (upload file time is exclude)
 */
 function validateDate($date)
 {
-	global $maxdelay;
-    $d = DateTime::createFromFormat('Ymd_His', $date);
-    $now = new DateTime("now");
-    $interval = $now->getTimestamp() - $d->getTimestamp();
-    $upload_time = time() - $_SERVER['REQUEST_TIME']; // elapse time in second for upload process
-    return ($d && $d->format('Ymd_His') === $date && $interval<$upload_time+$maxdelay);
+  global $maxdelay;
+  $d = DateTime::createFromFormat('Ymd_His', $date);
+  $now = new DateTime("now");
+  $interval = $now->getTimestamp() - $d->getTimestamp();
+  $upload_time = time() - $_SERVER['REQUEST_TIME']; // elapse time in second for upload process
+  return ($d && $d->format('Ymd_His') === $date && $interval<$upload_time+$maxdelay);
 }
 
 function rmdir_recursive($dir)
@@ -84,9 +81,9 @@ function rmdir_recursive($dir)
 
 if ( $_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST) &&
      empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0 )
-{      
+{
   $displayMaxSize = ini_get('post_max_size');
- 
+
   switch ( substr($displayMaxSize,-1) )
   {
     case 'G':
@@ -96,19 +93,19 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST) &&
     case 'K':
        $displayMaxSize = $displayMaxSize * 1024;
   }
- 
+
   $error = 'Posted data is too large. '.
            $_SERVER[CONTENT_LENGTH].
            ' bytes exceeds the maximum size of '.
            $displayMaxSize.' bytes.';
-           
+
   echo "ERROR#".$error;
   http_response_code(403);
   exit();
 }
 
 // Some post values are required
-if (!isset($_POST["token_iv"]) || !isset($_POST["token"]) || 
+if (!isset($_POST["token_iv"]) || !isset($_POST["token"]) ||
    (!isset($_POST["check"]) && !isset($_POST["checkfile"]) && !isset($_POST["sync_filelist"]) && !isset($_POST["sync_dirlist"]) && !isset($_POST["get_filelist"]) && !isset($_POST["iv"]))) {
 	http_response_code(403);
 	echo "ERROR#Remote access denied 0";
@@ -129,14 +126,14 @@ if (!validateDate($token)){
 if(isset($_POST["check"])) {
 	if ($_POST["check"]=="HELLO") {
 		echo "READY";
-		http_response_code(200);		
+		http_response_code(200);
 	}
 	else http_response_code(403);
 	exit();
 }
 
 //// Test if file must be uploaded (=file not exist)
-if(isset($_POST["checkfile"])) {    
+if(isset($_POST["checkfile"])) {
 	$target_file = $target_dir . $_POST["checkfile"];
     if (!file_exists($target_file)) http_response_code(200);
     else {
@@ -145,18 +142,18 @@ if(isset($_POST["checkfile"])) {
     exit();
 }
 
-if(isset($_POST["get_filelist"])) {   
+if(isset($_POST["get_filelist"])) {
 	$directory = $target_dir .$_POST["get_filelist"];
 	if(!is_dir($directory)) {
 		http_response_code(403);
 		exit();
 	}
-	
+
 	$scanned_directory = array_filter(scandir($directory), function($item) {
-		global $directory; 
-		return is_file($directory . $item); 
+		global $directory;
+		return is_file($directory . $item);
 	});
-	
+
 	echo gzencode(json_encode(array_values($scanned_directory)),9);
 	exit();
 }
@@ -164,28 +161,28 @@ if(isset($_POST["get_filelist"])) {
 /*
  *  Sync email files (eml or eml.gz) - delete emails that client does not have
  */
-if(isset($_POST["sync_filelist"]) && isset($_POST["sync_directory"])) {   
+if(isset($_POST["sync_filelist"]) && isset($_POST["sync_directory"])) {
 	$retval = true;
 	$deleted_ok = 0;
 	$deleted_err = 0;
 	$eml_valid = json_decode(gzdecode(base64_decode($_POST["sync_filelist"])), true);
 	$directory = $target_dir .$_POST["sync_directory"];
-	
+
 	if(!is_dir($directory)) {
 		echo "INFO#-> Nothing to do\n";
 		exit();
 	}
-	
+
 	// Set array to avoid php warning on array_diff() with an empty array argument
 	if (empty($eml_valid)) $eml_valid = array("");
-	
+
 	$scanned_directory = array_filter(scandir($directory), function($item) {
-		global $directory; 
-		return is_file($directory . $item); 
+		global $directory;
+		return is_file($directory . $item);
 	});
-	
-	$emltoremove = array_diff($scanned_directory, $eml_valid);	
-	
+
+	$emltoremove = array_diff($scanned_directory, $eml_valid);
+
 	// Remove unnecessary email files
 	foreach ($emltoremove as $eml) {
 		if (unlink($directory.$eml)) {
@@ -198,7 +195,7 @@ if(isset($_POST["sync_filelist"]) && isset($_POST["sync_directory"])) {
 			$deleted_err++;
 		}
 	}
-	
+
 	// Remove empty dir
 	if (count(scandir($directory)) == 2) {
 		if (rmdir($directory)) echo "VERBOSE3#-> Successfully deleted \"".$directory."\"\n";
@@ -206,8 +203,8 @@ if(isset($_POST["sync_filelist"]) && isset($_POST["sync_directory"])) {
 			echo "VERBOSE1#-> Unable to remove \"".$directory."\"\n";
 			$retval = false;
 		}
-	}	
-	
+	}
+
 	if (!$deleted_ok && !$deleted_err)
 		echo "INFO#-> Nothing to do (".count($scanned_directory)." emails on server)\n";
 	else
@@ -216,16 +213,16 @@ if(isset($_POST["sync_filelist"]) && isset($_POST["sync_directory"])) {
     exit();
 }
 
-/* 
+/*
  *  Sync directory tree - delete directories that client does not have
  */
-if(isset($_POST["sync_dirlist"]) && isset($_POST["sync_directory"])) {   
+if(isset($_POST["sync_dirlist"]) && isset($_POST["sync_directory"])) {
 	$retval = true;
 	$deleted_ok = 0;
 	$deleted_err = 0;
 	$dir_valid = json_decode(gzdecode(base64_decode($_POST["sync_dirlist"])), true);
 	$directory = $target_dir .$_POST["sync_directory"];
-	
+
 	$iter = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
 		RecursiveIteratorIterator::SELF_FIRST,
@@ -238,10 +235,10 @@ if(isset($_POST["sync_dirlist"]) && isset($_POST["sync_directory"])) {
 			$local_dirlist[] = substr($path, strlen($target_dir))."/"; // adding "/" because mboxzilla directories list ending like that
 		}
 	}
-	
-	$dirtoremove = array_diff($local_dirlist, $dir_valid);	
-		
-	function is_forbidden($forbiddennames, $stringtocheck) 
+
+	$dirtoremove = array_diff($local_dirlist, $dir_valid);
+
+	function is_forbidden($forbiddennames, $stringtocheck)
 	{
 		foreach ($forbiddennames as $name) {
 			if (stripos($name, $stringtocheck) !== FALSE) {
@@ -249,7 +246,7 @@ if(isset($_POST["sync_dirlist"]) && isset($_POST["sync_directory"])) {
 			}
 		}
 	}
-	
+
 	// Sort in reverse order to recursively remove directories
 	rsort($dirtoremove);
 	foreach ($dirtoremove as $key => $val) {
@@ -259,14 +256,14 @@ if(isset($_POST["sync_dirlist"]) && isset($_POST["sync_directory"])) {
 			$dir = $target_dir .$val;
 			if (rmdir_recursive($dir))
 				echo "VERBOSE3#-> Successfully deleted \"$dir\"\n";
-			else 
+			else
 				echo "VERBOSE1#-> Unable to remove \"$dir\"\n";
 		}
-	}	
-	
+	}
+
 	// Directories was the same
 	if ($retval) echo "INFO#-> Nothing to do\n";
-	
+
     exit();
 }
 
@@ -292,7 +289,7 @@ $uploadOk = 1;
 // Check if file already exists
 if (file_exists($target_file)) {
 	http_response_code(403);
-    echo "Sorry, file already exists.";   
+    echo "Sorry, file already exists.";
 }
 
 // Check if $uploadOk is set to 0 by an error
@@ -313,3 +310,4 @@ if ($uploadOk == 0) {
     }
 }
 ?>
+
