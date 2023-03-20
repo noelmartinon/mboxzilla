@@ -33,7 +33,7 @@
 #define APP_INFO "\
 \n\
 mboxzilla version " APP_VERSION "\n\
-Copyright (C) 2017-2019 Noel Martinon. All rights reserved.\n\
+Copyright (C) 2017-2023 Noel Martinon. All rights reserved.\n\
 "
 
 #define APP_DESCRIPTION "\
